@@ -3,10 +3,10 @@
   "private": true,
   "version": "1.0.2",
   "scripts": {
-    "dev": "vite",
+    "dev": "node server.mjs",
     "test": "vue-tsc --noEmit",
-    "build": "vite build",
-    "preview": "vite preview",
+    "build": "vite build && vite build --ssr src/entry-server.ts",
+    "preview": "NODE_ENV=production node server.mjs",
     "lint": "eslint . --ext .vue,.js,.ts,.jsx,.tsx --fix"
   },
   "dependencies": {
@@ -18,7 +18,11 @@
     "vite-plugin-prismjs": "^0.0.8",
     "vue": "^3.2.37",
     "vue-router": "^4.1.6",
-    "vuex": "^4.1.0"
+    "vuex": "^4.1.0",
+    "@vue/server-renderer": "^3.4.0",
+    "express": "^4.19.2",
+    "compression": "^1.7.4",
+    "serve-static": "^1.15.0"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^5.43.0",

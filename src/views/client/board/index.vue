@@ -42,11 +42,11 @@ const getTopRefWxH = () => {
 };
 onMounted(() => {
   getTopRefWxH();
-  window.onresize = () => {
-    return (() => {
+  if (typeof window !== 'undefined') {
+    window.onresize = () => {
       getTopRefWxH();
-    })();
-  };
+    };
+  }
 });
 </script>
 

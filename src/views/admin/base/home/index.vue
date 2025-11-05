@@ -161,15 +161,28 @@
 </template>
 
 <script lang="ts" setup>
-import * as echarts from 'echarts';
 import { nextTick, onActivated, onMounted, ref } from 'vue';
 import { User } from '@/utils/interface/base';
+
+let echartsModule: typeof import('echarts') | null = null;
+const loadEcharts = async () => {
+  if (import.meta.env.SSR) {
+    return null;
+  }
+  if (!echartsModule) {
+    echartsModule = await import('echarts');
+  }
+  return echartsModule;
+};
 
 const userData = ref<User>();
 /**
  * 获取本地用户信息
  */
 const getStorageUser = async () => {
+  if (typeof window === 'undefined') {
+    return;
+  }
   let parse = sessionStorage.getItem('user');
   if (parse) {
     userData.value = JSON.parse(parse);
@@ -229,7 +242,11 @@ const setChartWidth = () => {
   }
 };
 
-const drawLine = () => {
+const drawLine = async () => {
+  const echarts = await loadEcharts();
+  if (!echarts || !refMyChart.value || !refMyChartDoughnut.value) {
+    return;
+  }
   // 基于准备好的dom，初始化echarts实例
   myChart = echarts.init(refMyChart.value);
   // 绘制图表
@@ -447,8 +464,8 @@ const drawLine = () => {
   });
 };
 
-window.onresize = () => {
-  return (() => {
+if (typeof window !== 'undefined') {
+  window.onresize = () => {
     statsWidthRef.value = charRef.value.offsetWidth;
     if (body.value.offsetWidth < 800) {
       height.value = 0;
@@ -456,8 +473,8 @@ window.onresize = () => {
       height.value = body.value.offsetHeight - top.value.offsetHeight - info.value.offsetHeight;
     }
     setChartWidth();
-  })();
-};
+  };
+}
 </script>
 
 <style scoped lang="scss">

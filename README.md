@@ -1,16 +1,58 @@
-# Vue 3 + TypeScript + Vite
+# QSub Blog Web
 
-This template should help get you started developing with Vue 3 and TypeScript in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+This project powers the QSub blog frontend. It is built with Vue 3, TypeScript, Vite, and Element Plus. The app now supports server-side rendering (SSR) with an Express server for improved SEO and first paint.
 
-## Recommended IDE Setup
+## Getting Started
 
-- [VS Code](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar)
+Install dependencies:
 
-## Type Support For `.vue` Imports in TS
+```bash
+npm install
+```
 
-Since TypeScript cannot handle type information for `.vue` imports, they are shimmed to be a generic Vue component type by default. In most cases this is fine if you don't really care about component prop types outside of templates. However, if you wish to get actual prop types in `.vue` imports (for example to get props validation when using manual `h(...)` calls), you can enable Volar's Take Over mode by following these steps:
+### Development Server
 
-1. Run `Extensions: Show Built-in Extensions` from VS Code's command palette, look for `TypeScript and JavaScript Language Features`, then right click and select `Disable (Workspace)`. By default, Take Over mode will enable itself if the default TypeScript extension is disabled.
-2. Reload the VS Code window by running `Developer: Reload Window` from the command palette.
+Run the SSR-aware development server. The Express server proxies Vite's dev middleware and performs server-side rendering on each request.
 
-You can learn more about Take Over mode [here](https://github.com/johnsoncodehk/volar/discussions/471).
+```bash
+npm run dev
+```
+
+The application will be available at `http://localhost:4173` (or the port shown in the console output).
+
+### Type-Checking
+
+Type checking is provided through `vue-tsc`. The legacy codebase still contains a number of type issues, so the command currently fails; fix or ignore those issues before relying on the output.
+
+```bash
+npm run test
+```
+
+### Production Build
+
+Create both the client bundle and the server bundle used by the Express renderer:
+
+```bash
+npm run build
+```
+
+Client assets will be emitted under `dist/` and the SSR bundle under `dist/entry-server.mjs`.
+
+### Production Preview
+
+After building, launch the Express server in production mode to serve the pre-rendered pages:
+
+```bash
+npm run preview
+```
+
+## Project Structure Highlights
+
+- `src/entry-client.ts` – Hydration entry point executed in the browser.
+- `src/entry-server.ts` – SSR entry that renders the app to a string per request.
+- `server.mjs` – Minimal Express server that handles SSR in development and production.
+- `src/app.ts` – Factory for creating Vue app instances with fresh router and store per request.
+
+## Additional Notes
+
+The project includes third-party libraries such as Element Plus, axios, and md-editor-v3. Some legacy modules still depend on browser-only APIs, so ensure guards are in place when adding new SSR features.

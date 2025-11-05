@@ -1,8 +1,15 @@
-import { createRouter, createWebHistory } from 'vue-router';
+import { createRouter as createVueRouter, createMemoryHistory, createWebHistory } from 'vue-router';
 import routes from './routes';
 
-const router = createRouter({
-  history: createWebHistory(), // 使用 history 模式  去掉#号
-  routes,
-});
+export function createRouter(isServer = false) {
+  const usingMemoryHistory = isServer || typeof window === 'undefined';
+
+  return createVueRouter({
+    history: usingMemoryHistory ? createMemoryHistory() : createWebHistory(),
+    routes,
+  });
+}
+
+const router = createRouter();
+
 export default router;
