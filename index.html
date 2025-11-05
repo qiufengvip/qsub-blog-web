@@ -8,6 +8,7 @@
   <meta name="baidu-site-verification" content="codeva-yIYOGQX23h" />
   <title>秋枫博客</title>
   <link href="/static/css/reset.css" rel="stylesheet">
+  <!--preload-links-->
 </head>
 <noscript>
   <strong>哦,老天 <%= htmlWebpackPlugin.options.title %> 没有开启js则不能使用本页面.</strong>
@@ -22,7 +23,7 @@
 <!--    </div>-->
 <!--    <span data-v-b30306d4="" class="qsub-menu-title">开往</span>-->
 <!--</a>-->
-<div id="app"></div>
-<script src="/src/main.ts" type="module"></script>
+<div id="app"><!--ssr-outlet--></div>
+<script src="/src/entry-client.ts" type="module"></script>
 </body>
 </html>

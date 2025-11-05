@@ -102,13 +102,14 @@ import DLTagsView from '@/components/common/DLTagsView/index.vue';
 
 import { useRoute, useRouter } from 'vue-router';
 import { onBeforeMount, onMounted, ref } from 'vue';
-import store from '@/store';
+import { useStore } from 'vuex';
 import { useColorMode } from '@vueuse/core';
 import { requestLogout } from '@/http/interface/api';
 import { Document, HomeFilled, Moon, Sunny, Comment, Avatar, ArrowLeftBold } from '@element-plus/icons';
 import { openRouter } from '@/utils/openPage';
 let router = useRouter();
 const route = useRoute();
+const store = useStore();
 console.log(route);
 const openPage = (uri: string, name: string) => {
   router.push({

@@ -153,7 +153,9 @@ const getMenuHref = (item: any) => {
 onMounted(() => {
   // 监听页面滚动事件
   show.value = true;
-  window.addEventListener('scroll', scrolling);
+  if (typeof window !== 'undefined') {
+    window.addEventListener('scroll', scrolling);
+  }
   getMenuList().then((res: any) => {
     menuData.value = res;
   });
@@ -195,6 +197,9 @@ const loginExit = (status: boolean) => {
  * 获取本地用户信息
  */
 const getStorageUser = async () => {
+  if (typeof window === 'undefined') {
+    return;
+  }
   let parse = sessionStorage.getItem('user');
   if (parse) {
     userData.value = JSON.parse(parse);

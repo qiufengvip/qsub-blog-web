@@ -124,9 +124,9 @@ import { Delete, Download, Plus, ZoomIn } from '@element-plus/icons';
 import { onBeforeRouteLeave, onBeforeRouteUpdate, useRoute } from 'vue-router';
 import { detail, saveOrUpdate } from '@/http/interface/blog/psot';
 import { BlogPost, BlogPostReleasesEnum, BlogPostStateEnum } from '@/utils/interface/post';
-import store from '@/store';
+import { useStore } from 'vuex';
 import router from '@/router';
-import { getLabelList, saveOrUpdate as saveOrUpdateLabel } from '@/http/interface/blog/PostLabel';
+import { getLabelList, saveOrUpdate as saveOrUpdateLabel } from '@/http/interface/blog/postLabel';
 import { getTree } from '@/http/interface/blog/type';
 import { ApplicationError } from '@/utils/error';
 import MarkdownEditor from '@/components/common/MarkdownEditor/index.vue';
@@ -151,6 +151,7 @@ const labelList = ref<any[]>([]);
 const labelsInputValue = ref();
 // 标签选择器的可见性
 const labelsInputVisible = ref(false);
+const store = useStore();
 const postStateList = ref([]); //文章审核状态
 const postReleaseList = ref([]); //文章发布状态
 const getLabelListData = () => {

@@ -1,15 +1,50 @@
 <template>
-  <MdEditor v-model="text" :theme="mode" style="height: 100%" :toolbars-exclude="['github']" @onChange="updateValue" @onSave="save" @onUploadImg="uploadImage" />
+  <component
+    :is="MdEditorComponent"
+    v-model="text"
+    :theme="mode"
+    style="height: 100%"
+    :toolbars-exclude="['github']"
+    @onChange="updateValue"
+    @onSave="save"
+    @onUploadImg="uploadImage"
+  />
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, watch } from 'vue';
-import { MdEditor } from 'md-editor-v3';
+import { defineAsyncComponent, defineComponent, ref, watch, defineProps, defineEmits, PropType } from 'vue';
 import 'md-editor-v3/lib/style.css';
-import { defineProps, defineEmits } from 'vue';
 import { useColorMode } from '@vueuse/core';
 import { ElNotification } from 'element-plus';
 import { uploadFile } from '@/http/interface/api';
+
+const isClient = typeof window !== 'undefined';
+const MdEditorComponent = isClient
+  ? defineAsyncComponent(async () => {
+      const module = await import('md-editor-v3');
+      return module.MdEditor;
+    })
+  : defineComponent({
+      name: 'MdEditorStub',
+      props: {
+        modelValue: {
+          type: String,
+          default: '',
+        },
+        theme: {
+          type: String,
+          default: 'light',
+        },
+        toolbarsExclude: {
+          type: Array as PropType<string[]>,
+          default: () => [],
+        },
+      },
+      emits: ['update:modelValue', 'saved', 'onChange', 'onSave', 'onUploadImg'],
+      setup() {
+        return () => null;
+      },
+    });
 
 const mode: any = useColorMode({
   attribute: 'class',
