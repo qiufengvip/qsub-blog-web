@@ -73,6 +73,9 @@ export const lookingBranch: any = (data: any[], pid: string | number) => {
  * @param txt
  */
 export const copyText: any = function (txt: string) {
+  if (typeof document === 'undefined') {
+    return;
+  }
   const input = document.createElement('input');
   input.value = txt;
   document.body.appendChild(input);
@@ -102,6 +105,9 @@ export const imgFileType: any = [
  * 获取配置信息
  */
 export const getConfigData = (key: string): any => {
+  if (typeof window === 'undefined') {
+    return undefined;
+  }
   let configDataStr = localStorage.getItem(GlobalConfig);
   if (configDataStr) {
     let configData = JSON.parse(configDataStr);
@@ -113,6 +119,9 @@ export const getConfigData = (key: string): any => {
  * 设置网页标题
  */
 export const setWebTitle = (title: string) => {
+  if (typeof window === 'undefined') {
+    return;
+  }
   if (title) {
     document.title = `秋枫博客-${title}`;
   } else {
@@ -124,6 +133,9 @@ export const setWebTitle = (title: string) => {
  * 初始化配置信息
  */
 export const initConfigData = async (): Promise<any> => {
+  if (typeof window === 'undefined') {
+    return;
+  }
   let item = localStorage.getItem(GlobalConfig);
   if (item) {
     let parse = JSON.parse(item);
@@ -143,6 +155,9 @@ export const initConfigData = async (): Promise<any> => {
  * 检查登录信息
  */
 export const checkLogin: any = async (): Promise<boolean> => {
+  if (typeof window === 'undefined') {
+    return false;
+  }
   let response: any = await requestCheckLogin();
   if (response.code === 0) {
     console.log(response);
@@ -156,6 +171,9 @@ export const checkLogin: any = async (): Promise<boolean> => {
  * 获取文章是否添加喜欢
  */
 export const getPostLikeStart = (key: number): boolean => {
+  if (typeof window === 'undefined') {
+    return false;
+  }
   let configDataStr = localStorage.getItem(GlobalLikePost);
   if (configDataStr) {
     let configData: number[] = JSON.parse(configDataStr);
@@ -167,6 +185,9 @@ export const getPostLikeStart = (key: number): boolean => {
  * 添加文章是否添加喜欢
  */
 export const addPostLike = (key: number) => {
+  if (typeof window === 'undefined') {
+    return;
+  }
   let configDataStr = localStorage.getItem(GlobalLikePost);
   if (configDataStr) {
     let configData: number[] = JSON.parse(configDataStr);

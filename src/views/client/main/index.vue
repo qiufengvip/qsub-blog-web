@@ -101,20 +101,25 @@ const showPostList = async (id: string) => {
 
 const scrollTop = ref(0); //导航头
 const data = ref({ centerpiece: getConfigData('centerpiece') }); //导航头
-const w = ref(window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth); //导航头
-const h = ref<any>(window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight);
+const isClient = typeof window !== 'undefined';
+const w = ref(isClient ? window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth : 0); //导航头
+const h = ref<any>(isClient ? window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight : 0);
 const main = ref();
 onMounted(() => {
+  if (!isClient) {
+    return;
+  }
   window.addEventListener('scroll', scrollHandle);
   window.onresize = () => {
-    return (() => {
-      w.value = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
-      h.value = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
-    })();
+    w.value = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
+    h.value = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
   };
   showPostList(nav.value);
 });
 const scrollHandle = () => {
+  if (!isClient) {
+    return;
+  }
   scrollTop.value = (window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop) / 30;
 };
 const toMain = () => {

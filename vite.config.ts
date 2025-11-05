@@ -26,6 +26,10 @@ export default defineConfig({
       languages: 'all',
     }),
   ],
+  ssr: {
+    noExternal: ['element-plus', '@element-plus/icons', 'md-editor-v3'],
+  },
+
   server: {
     host: '0.0.0.0', // 监听的IP地址
     port: 3000, //启动端口

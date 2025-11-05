@@ -6,7 +6,8 @@ import { ApplicationError } from '@/utils/error';
 // import store from '@/store/index' 如果使用vuex，那么token，userinfo都可以在登录以后存储到store中，不需要使用storage
 // 获取浏览器的接口地址。
 
-let baseUrl = window.location.origin;
+const isClient = typeof window !== 'undefined';
+const baseUrl = isClient ? window.location.origin : 'http://localhost:3000';
 
 const http = axios.create({
   baseURL: baseUrl + '/api',
@@ -15,7 +16,7 @@ const http = axios.create({
 // 请求拦截器，设置token
 http.interceptors.request.use(
   (config) => {
-    if (sessionStorage && sessionStorage.getItem('token')) {
+    if (isClient && sessionStorage.getItem('token')) {
       const token = sessionStorage.getItem('token');
       // @ts-ignore
       token && (config.headers[token.name] = token.data);
@@ -43,7 +44,9 @@ http.interceptors.response.use(
           type: 'error',
           grouping: true,
         });
-        sessionStorage.setItem('token', '');
+        if (isClient) {
+          sessionStorage.setItem('token', '');
+        }
         return Promise.reject(response);
       } else if (response.data.code == 500 || response.data.code == 400) {
         //返回错误拦截
@@ -66,7 +69,9 @@ http.interceptors.response.use(
         type: 'error',
         grouping: true,
       });
-      sessionStorage.setItem('token', '');
+      if (isClient) {
+        sessionStorage.setItem('token', '');
+      }
     } else {
       if (error.message.indexOf('timeout') > -1) {
         ElMessage.error('请求超时');

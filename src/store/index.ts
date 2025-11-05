@@ -1,6 +1,6 @@
-import { createStore } from 'vuex';
+import { createStore as createVuexStore } from 'vuex';
 
-export default createStore({
+const createStoreOptions = () => ({
   state: {
     // 放置变量
     menuList: [] as any[], // 菜单栏
@@ -13,6 +13,10 @@ export default createStore({
     // 获取set方法
     // 菜单栏的数据
     setMenuList: (state) => {
+      if (typeof window === 'undefined') {
+        state.menuList = [];
+        return;
+      }
       let menu: any = sessionStorage['admin-menu'];
       if (menu) {
         state.menuList = JSON.parse(menu);
@@ -98,3 +102,10 @@ export default createStore({
   actions: {},
   modules: {},
 });
+
+export function createStore() {
+  return createVuexStore(createStoreOptions());
+}
+
+export type AppStore = ReturnType<typeof createStore>;
+

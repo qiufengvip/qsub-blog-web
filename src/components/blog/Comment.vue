@@ -111,6 +111,9 @@ const issueSucceed = (packetId) => {
  * 获取本地用户信息
  */
 const getStorageUser = async () => {
+  if (typeof window === 'undefined') {
+    return;
+  }
   let parse = sessionStorage.getItem('user');
   if (parse) {
     userData.value = JSON.parse(parse);
