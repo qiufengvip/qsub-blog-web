@@ -1,0 +1,23 @@
+@use "element-plus/theme-chalk/src/dark/css-vars.scss" as *;
+
+.dark{
+//   background-color: #171717;
+//   .el-dropdown-link{
+//     color:beige;
+//   }
+    // 背景
+    --bg-background-color: #1c1c21;
+    // 面板
+    --bg-brand-color: #27272e;
+    // 内容区
+    --content-color: #34343d;
+    // 边框
+    --border-box-color: rgba(34, 34, 40, 0.8);
+    --text-color: #ffffff;
+    --text-sub-color: #979797;
+    --tx-color: #fff;
+    .el-dropdown-link{
+        color: #fff;
+    }
+}
+
