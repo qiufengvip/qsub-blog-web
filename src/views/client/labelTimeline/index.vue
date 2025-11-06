@@ -45,7 +45,9 @@ import { useRoute } from 'vue-router';
 import { openPost } from '@/utils/openPage';
 import { detail } from '@/http/interface/client/label';
 import { setWebTitle } from '@/utils/dataDispose';
+import useElementPlusInjections from '@/views/client/useElementPlusInjections';
 
+useElementPlusInjections();
 const img = ref('url(http://file.qsub.cn/blog/2024/8/d563c1f1e3e84dc5a4cd73ba838af26e.jpg) center center / 100% no-repeat');
 const loading = ref(false);
 const postList = ref<any[]>([]);

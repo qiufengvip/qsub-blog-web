@@ -30,7 +30,9 @@ import { ref } from 'vue';
 import { getLabelList } from '@/http/interface/client/label';
 import { openLabelTImeLine } from '@/utils/openPage';
 import { setWebTitle } from '@/utils/dataDispose';
+import useElementPlusInjections from '@/views/client/useElementPlusInjections';
 
+useElementPlusInjections();
 const img = ref('url(http://file.qsub.cn/blog/2024/8/e7a984a09f0b4cb68af458357bbdfbe0.jpg) center center / 100% no-repeat');
 const title = ref('标签云');
 setWebTitle(title.value);

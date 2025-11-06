@@ -103,7 +103,9 @@ import { getCatalogPostList, getHotPostList, getNewestPostList } from '@/http/in
 import { Clock } from '@element-plus/icons';
 import { BlogPostSketch } from '@/utils/interface/blogPostSketch';
 import { openPost } from '@/utils/openPage';
+import useElementPlusInjections from '@/views/client/useElementPlusInjections';
 
+useElementPlusInjections();
 const nav = ref('getNewestPostList');
 setWebTitle('');
 const navList = ref([

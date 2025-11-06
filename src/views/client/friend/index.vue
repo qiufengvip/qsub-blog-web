@@ -52,7 +52,9 @@ import { getLinkList } from '@/http/interface/client/link';
 import { openLink } from '@/utils/openPage';
 import { ElMessage } from 'element-plus';
 import MarkdownShow from '@/components/common/MarkdownShow/index.vue';
+import useElementPlusInjections from '@/views/client/useElementPlusInjections';
 
+useElementPlusInjections();
 setWebTitle('朋友');
 const essay = getConfigData('friendMassage');
 const topRef = ref();

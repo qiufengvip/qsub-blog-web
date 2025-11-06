@@ -174,7 +174,9 @@ import { useRoute } from 'vue-router';
 import { BlogClientPostDetail } from '@/utils/interface/BlogClientPostDetail';
 import { addPostLike, getPostLikeStart, setWebTitle } from '@/utils/dataDispose';
 import { openLabelTImeLine } from '@/utils/openPage';
+import useElementPlusInjections from '@/views/client/useElementPlusInjections';
 
+useElementPlusInjections();
 const route = useRoute();
 // 文章id
 const postId = route.params.id as string;

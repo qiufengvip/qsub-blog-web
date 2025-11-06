@@ -28,6 +28,8 @@ import ViewFrame from '@/components/blog/ViewFrame/index.vue';
 import { useRoute } from 'vue-router';
 import { search } from '@/http/interface/client/post';
 import { setWebTitle } from '@/utils/dataDispose';
+import useElementPlusInjections from '@/views/client/useElementPlusInjections';
+useElementPlusInjections();
 const route = useRoute();
 // 分类专栏id
 const word = route.params.word as string;

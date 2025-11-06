@@ -25,7 +25,9 @@ import { onMounted, ref } from 'vue';
 import Comment from '@/components/blog/Comment.vue';
 import { getConfigData, setWebTitle } from '@/utils/dataDispose';
 import MarkdownShow from '@/components/common/MarkdownShow/index.vue';
+import useElementPlusInjections from '@/views/client/useElementPlusInjections';
 
+useElementPlusInjections();
 const essay = getConfigData('boardMassage');
 const topRef = ref();
 const img = ref('http://file.qsub.cn/blog/2024/8/60a13622bb2942ca9e7afdcbd29b0a0b.jpg');

@@ -91,7 +91,9 @@
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { onMounted, ref } from 'vue';
 import { requestConfigDeletedLabel, requestConfigGetLabelList } from '@/http/interface/api';
+import useElementPlusInjections from '@/views/client/useElementPlusInjections';
 
+useElementPlusInjections();
 interface pagination {
   pageSize: number; //每页多少条
   total: number; //共多少条

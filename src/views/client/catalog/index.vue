@@ -38,6 +38,9 @@ import { useRoute } from 'vue-router';
 import { detail } from '@/http/interface/client/catalog';
 import { openLabelTImeLine } from '@/utils/openPage';
 import { setWebTitle } from '@/utils/dataDispose';
+import useElementPlusInjections from '@/views/client/useElementPlusInjections';
+
+useElementPlusInjections();
 const route = useRoute();
 // 分类专栏id
 const catalogId = route.params.id as string;
