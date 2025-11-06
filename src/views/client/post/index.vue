@@ -167,41 +167,39 @@ import HotComments from '@/components/blog/HotComments.vue';
 import Comment from '@/components/blog/Comment.vue';
 import SvgIcon from '@/components/common/SvgIcon/index.vue';
 import MarkdownShow from '@/components/common/MarkdownShow/index.vue';
-import { onMounted, ref } from 'vue';
+import { ref } from 'vue';
 import { ElMessage } from 'element-plus';
 import { detail, like } from '@/http/interface/client/post';
 import { useRoute } from 'vue-router';
 import { BlogClientPostDetail } from '@/utils/interface/BlogClientPostDetail';
 import { addPostLike, getPostLikeStart, setWebTitle } from '@/utils/dataDispose';
 import { openLabelTImeLine } from '@/utils/openPage';
+
+const route = useRoute();
+// 文章id
+const postId = route.params.id as string;
 // 点赞状态
-const isLiked = ref(false);
+const isLiked = ref(getPostLikeStart(Number(postId)));
 // 是否展示文章
 const showPost = ref(true);
 
 const loading = ref(true);
-const route = useRoute();
-// 文章id
-const postId = route.params.id as string;
 const postData = ref<BlogClientPostDetail | undefined>(undefined);
-const init = () => {
-  detail({ postId: postId })
-    .then((res: any) => {
-      setWebTitle(res.title);
-      postData.value = res;
-      showPost.value = true;
-      loading.value = false;
-    })
-    .catch((e) => {
-      showPost.value = false;
-      loading.value = false;
-    });
-  // 获取点赞状态
-  isLiked.value = getPostLikeStart(parseInt(postId));
+const fetchPostDetail = async () => {
+  try {
+    const res: any = await detail({ postId: postId });
+    setWebTitle(res.title);
+    postData.value = res;
+    showPost.value = true;
+  } catch (error) {
+    console.error('获取文章详情失败:', error);
+    showPost.value = false;
+  } finally {
+    loading.value = false;
+  }
 };
-onMounted(() => {
-  init();
-});
+
+await fetchPostDetail();
 /**
  * 点击喜欢
  */

@@ -26,7 +26,7 @@
 </template>
 <script lang="ts" setup>
 import ViewFrame from '@/components/blog/ViewFrame/index.vue';
-import { onMounted, ref } from 'vue';
+import { ref } from 'vue';
 import { getLabelList } from '@/http/interface/client/label';
 import { openLabelTImeLine } from '@/utils/openPage';
 import { setWebTitle } from '@/utils/dataDispose';
@@ -54,23 +54,21 @@ const getType = (id: any) => {
       return 'rgba(144,147,153,1)';
   }
 };
-const init = () => {
+const fetchLabels = async () => {
   loading.value = true;
-  getLabelList()
-    .then((res: any) => {
-      postNumber.value = res.postNumber;
-      labelNumber.value = res.labelNumber;
-      label.value = res.labelList;
-      loading.value = false;
-    })
-    .catch(() => {
-      loading.value = false;
-    });
+  try {
+    const res: any = await getLabelList();
+    postNumber.value = res.postNumber;
+    labelNumber.value = res.labelNumber;
+    label.value = res.labelList;
+  } catch (error) {
+    console.error('获取标签列表失败:', error);
+  } finally {
+    loading.value = false;
+  }
 };
 
-onMounted(() => {
-  init();
-});
+await fetchLabels();
 </script>
 
 <style lang="scss" scoped>

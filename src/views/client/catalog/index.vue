@@ -32,7 +32,7 @@
 import PostList from '@/components/blog/PostList.vue';
 import HotPost from '@/components/blog/HotPost.vue';
 import HotComments from '@/components/blog/HotComments.vue';
-import { onMounted, ref } from 'vue';
+import { ref } from 'vue';
 import ViewFrame from '@/components/blog/ViewFrame/index.vue';
 import { useRoute } from 'vue-router';
 import { detail } from '@/http/interface/client/catalog';
@@ -57,20 +57,14 @@ const label = ref<any[]>([]);
 /**
  * 分类专栏初始化
  */
-const init = async () => {
-  try {
-    let response: any = await detail(paramData.value);
-    title.value = response.catalogName;
-    setWebTitle(title.value);
-    label.value = response.labelList;
-  } catch (e) {
-    console.log(e);
-  }
-};
-
-onMounted(() => {
-  init();
-});
+try {
+  const response: any = await detail(paramData.value);
+  title.value = response.catalogName;
+  setWebTitle(title.value);
+  label.value = response.labelList;
+} catch (error) {
+  console.error('获取专栏详情失败:', error);
+}
 </script>
 
 <style lang="scss" scoped>

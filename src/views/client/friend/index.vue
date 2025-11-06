@@ -68,23 +68,28 @@ const getTopRefWxH = () => {
   w.value = lxWxH.width;
   h.value = lxWxH.height;
 };
-const init = () => {
-  getLinkList().then((res) => {
+const fetchFriendList = async () => {
+  try {
+    const res = await getLinkList();
     friendList.value = res;
-  });
+  } catch (error) {
+    console.error('获取友链列表失败:', error);
+  }
 };
+await fetchFriendList();
 const handleCopyCodeSuccess = () => {
   ElMessage.success('复制成功');
 };
 
 onMounted(() => {
-  init();
   getTopRefWxH();
-  window.onresize = () => {
-    return (() => {
-      getTopRefWxH();
-    })();
-  };
+  if (typeof window !== 'undefined') {
+    window.onresize = () => {
+      return (() => {
+        getTopRefWxH();
+      })();
+    };
+  }
 });
 </script>
 

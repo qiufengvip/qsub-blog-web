@@ -38,7 +38,7 @@
 </template>
 <script lang="ts" setup>
 import { Postcard } from '@element-plus/icons-vue';
-import { onMounted, ref } from 'vue';
+import { ref } from 'vue';
 import ViewFrame from '@/components/blog/ViewFrame/index.vue';
 import { getLabelPostList } from '@/http/interface/client/post';
 import { useRoute } from 'vue-router';
@@ -60,37 +60,54 @@ let PageInfo = {
   pageNum: 0,
   pageSize: 10,
 };
-const getDataList = () => {
+const getDataList = async () => {
+  if (loading.value) {
+    return;
+  }
   loading.value = true;
   PageInfo.pageNum += 1;
-  getLabelPostList(PageInfo)
-    .then((res: any) => {
-      showLoading.value = false;
-      loading.value = false;
-      let data: any[] = res.list;
+  try {
+    const res: any = await getLabelPostList(PageInfo);
+    showLoading.value = false;
+    const data: any[] = res.list || [];
+    if (data.length > 0) {
       postList.value.push(...data);
-    })
-    .catch(() => {
-      showLoading.value = false;
-      loading.value = false;
-    });
+    } else {
+      PageInfo.pageNum -= 1;
+    }
+  } catch (error) {
+    console.error('获取标签文章列表失败:', error);
+    PageInfo.pageNum -= 1;
+    showLoading.value = false;
+  } finally {
+    loading.value = false;
+  }
 };
 const labelData = ref<any>({});
-const init = () => {
-  detail({
-    id: labelId,
-  })
-    .then((res) => {
-      labelData.value = res;
+const fetchLabelDetail = async () => {
+  try {
+    const res = await detail({
+      id: labelId,
+    });
+    labelData.value = res;
+    if (res?.name) {
       setWebTitle(res.name);
-    })
-    .catch((e) => {});
-  getDataList();
+    }
+  } catch (error) {
+    console.error('获取标签详情失败:', error);
+    labelData.value = undefined;
+    showLoading.value = false;
+  }
 };
 
-onMounted(() => {
-  init();
-});
+if (labelId) {
+  await fetchLabelDetail();
+  if (labelData.value?.name) {
+    await getDataList();
+  }
+} else {
+  showLoading.value = false;
+}
 </script>
 
 <style lang="scss" scoped>
