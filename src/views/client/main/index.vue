@@ -12,7 +12,74 @@
           <div class="q-nav-main selected">
             <div v-for="(item, index) in navList" :key="index" :style="nav === item.id ? 'background: var(--content-color)' : ''" class="q-nav-item" @click="navClick(item.id)">{{ item.label }}</div>
           </div>
-          <post-list v-if="postListShow" :param="paramData" :request="postListRequest"></post-list>
+          <div v-if="postList.length" class="post-list">
+            <a v-for="(item, key) in postList" :key="key" :href="getUri(item)" @click.prevent @click="openPost(item.id)">
+              <div class="list-main">
+                <div class="list-vessel">
+                  <div v-if="item.postImg" class="list-left selected">
+                    <div :style="'background: url(' + item.postImg + ') center center no-repeat;'" class="img"></div>
+                  </div>
+                  <div class="list-right">
+                    <div class="list-top">
+                      <div class="list-title">{{ item.title }}</div>
+                      <div class="list-content">{{ item.subtitle }}</div>
+                    </div>
+                    <div class="list-belw selected">
+                      <div class="list-belw-item">
+                        <el-icon class="qsub-icon">
+                          <Clock />
+                        </el-icon>
+                        {{ item.createTime }}
+                      </div>
+                      <div class="post-stats">
+                        <div class="list-belw-item">
+                          <svg-icon name="post-post_list_like" />
+                          {{ item?.stats?.likeNumber }}
+                        </div>
+                        <div class="list-belw-item">
+                          <svg-icon name="post-post_list_view" />
+                          {{ item?.stats?.viewNumber }}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="list-vessel-move">
+                  <div v-if="item.postImg" class="list-left selected">
+                    <div :style="'background: url(' + item.postImg + ') center center no-repeat;'" class="img"></div>
+                  </div>
+                  <div class="list-right">
+                    <div class="list-top">
+                      <div class="list-title">{{ item.title }}</div>
+                      <div class="list-belw selected">
+                        <div class="list-belw-item">
+                          <el-icon class="qsub-icon">
+                            <Clock />
+                          </el-icon>
+                          {{ item.createTime }}
+                        </div>
+                        <div class="post-stats">
+                          <div class="list-belw-item">
+                            <svg-icon name="post-post_list_like" />
+                            {{ item?.stats?.likeNumber }}
+                          </div>
+                          <div class="list-belw-item">
+                            <svg-icon name="post-post_list_view" />
+                            {{ item?.stats?.viewNumber }}
+                          </div>
+                        </div>
+                      </div>
+                      <div v-if="item.subtitle" class="list-content">{{ item.subtitle }}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </a>
+          </div>
+          <div v-else class="post-list empty">{{ loading }}</div>
+          <div class="qsub-data-loading" :class="{ disabled: !hasMore, loading: loadingData }" @click="loadMore">
+            {{ loading }}
+          </div>
         </div>
       </div>
       <div class="right">
@@ -27,17 +94,16 @@
 
 <script lang="ts" setup>
 import ViewFrame from '@/components/blog/ViewFrame/index.vue';
-import { onMounted, ref } from 'vue';
-import PostList from '@/components/blog/PostList.vue';
+import { onBeforeUnmount, onMounted, ref } from 'vue';
 import HotPost from '@/components/blog/HotPost.vue';
 import HotComments from '@/components/blog/HotComments.vue';
 import SvgIcon from '@/components/common/SvgIcon/index.vue';
 import { getConfigData, setWebTitle } from '@/utils/dataDispose';
 import { getCatalogPostList, getHotPostList, getNewestPostList } from '@/http/interface/client/post';
+import { Clock } from '@element-plus/icons';
+import { BlogPostSketch } from '@/utils/interface/blogPostSketch';
+import { openPost } from '@/utils/openPage';
 
-const postListShow = ref(false);
-const postListRequest = ref<Function>(getNewestPostList);
-const paramData = ref({});
 const nav = ref('getNewestPostList');
 setWebTitle('');
 const navList = ref([
@@ -69,34 +135,107 @@ const navList = ref([
 /**
  * 分类被点击
  */
-const navClick = (id: string) => {
-  nav.value = id;
-  showPostList(id);
+const postList = ref<BlogPostSketch[]>([]);
+const loading = ref('查看更多 (｡・`ω´･)');
+const loadingData = ref(false);
+const hasMore = ref(true);
+
+const requestMap: Record<string, Function> = {
+  getNewestPostList,
+  getHotPostList,
 };
 
-/**
- * 展示列表
- */
-const showPostList = async (id: string) => {
-  console.log(id);
-  postListShow.value = false;
-  if (id === 'getNewestPostList') {
-    // 最新文章
-    postListRequest.value = getNewestPostList;
-    paramData.value = {};
-  } else if (id === 'getHotPostList') {
-    // 最热
-    postListRequest.value = getHotPostList;
-    paramData.value = {};
-  } else {
-    postListRequest.value = getCatalogPostList;
-    paramData.value = {
-      catalogId: parseInt(id),
-    };
+const pageInfo = ref({
+  search: {} as Record<string, any>,
+  pageNum: 0,
+  pageSize: 10,
+});
+
+const getUri = (item: BlogPostSketch) => `/post/${item.id}`;
+
+const resolveRequest = (id: string) => requestMap[id] || getCatalogPostList;
+
+const resolveSearch = (id: string) => {
+  if (id === 'getNewestPostList' || id === 'getHotPostList') {
+    return {};
   }
-  setTimeout(() => {
-    postListShow.value = true;
-  }, 0);
+  return {
+    catalogId: Number(id),
+  };
+};
+
+let activeNav = nav.value;
+
+const resetPagination = (id: string) => {
+  pageInfo.value = {
+    search: resolveSearch(id),
+    pageNum: 0,
+    pageSize: 10,
+  };
+  postList.value = [];
+  hasMore.value = true;
+  loading.value = '查看更多 (｡・`ω´･)';
+};
+
+const fetchPostList = async (id: string) => {
+  if (loadingData.value || !hasMore.value) {
+    return;
+  }
+  loadingData.value = true;
+  loading.value = '加载中...';
+  const request = resolveRequest(id);
+  try {
+    const payload = {
+      search: pageInfo.value.search,
+      pageNum: pageInfo.value.pageNum + 1,
+      pageSize: pageInfo.value.pageSize,
+    };
+    const response: any = await request(payload);
+    if (activeNav !== id) {
+      return;
+    }
+    if (response) {
+      pageInfo.value.pageNum = response.pageNum ?? payload.pageNum;
+      pageInfo.value.pageSize = response.pageSize ?? payload.pageSize;
+      if (Array.isArray(response.list) && response.list.length > 0) {
+        postList.value.push(...response.list);
+        loading.value = '查看更多 (｡・`ω´･)';
+      } else {
+        hasMore.value = false;
+        loading.value = '没有更多啦 (｡・`ω´･)';
+      }
+    } else {
+      hasMore.value = false;
+      loading.value = '没有更多啦 (｡・`ω´･)';
+    }
+  } catch (error) {
+    console.error('加载文章列表失败:', error);
+    loading.value = '加载失败，点击重试';
+  } finally {
+    loadingData.value = false;
+  }
+};
+
+const showPostList = async (id: string) => {
+  activeNav = id;
+  resetPagination(id);
+  await fetchPostList(id);
+};
+
+const loadMore = () => {
+  if (loadingData.value) return;
+  fetchPostList(activeNav);
+};
+
+const navClick = (id: string) => {
+  if (nav.value === id) {
+    if (!loadingData.value && hasMore.value) {
+      fetchPostList(id);
+    }
+    return;
+  }
+  nav.value = id;
+  showPostList(id);
 };
 
 const scrollTop = ref(0); //导航头
@@ -105,23 +244,39 @@ const isClient = typeof window !== 'undefined';
 const w = ref(isClient ? window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth : 0); //导航头
 const h = ref<any>(isClient ? window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight : 0);
 const main = ref();
+await showPostList(nav.value);
+
 onMounted(() => {
   if (!isClient) {
     return;
   }
   window.addEventListener('scroll', scrollHandle);
-  window.onresize = () => {
-    w.value = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
-    h.value = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
-  };
-  showPostList(nav.value);
+  window.addEventListener('resize', resizeHandle);
 });
+
+onBeforeUnmount(() => {
+  if (!isClient) {
+    return;
+  }
+  window.removeEventListener('scroll', scrollHandle);
+  window.removeEventListener('resize', resizeHandle);
+});
+
 const scrollHandle = () => {
   if (!isClient) {
     return;
   }
   scrollTop.value = (window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop) / 30;
 };
+
+const resizeHandle = () => {
+  if (!isClient) {
+    return;
+  }
+  w.value = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
+  h.value = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
+};
+
 const toMain = () => {
   main.value.scrollIntoView({ behavior: 'smooth', block: 'start' });
 };
@@ -252,5 +407,131 @@ body {
       padding: 0 7px;
     }
   }
+}
+
+.post-list {
+  .list-main {
+    margin-bottom: 20px;
+    width: 100%;
+    border-radius: 5px;
+    background-color: var(--bg-brand-color);
+    transition: opacity 0.2s ease;
+  }
+
+  .list-main:hover {
+    opacity: 0.9;
+    cursor: pointer;
+  }
+
+  .list-main:active {
+    opacity: 0.8;
+  }
+
+  .list-vessel,
+  .list-vessel-move {
+    display: flex;
+    width: 100%;
+  }
+
+  .list-vessel-move {
+    display: none;
+  }
+
+  .list-left {
+    width: 300px;
+    margin: 10px;
+    overflow: hidden;
+    border-radius: 5px;
+  }
+
+  .list-left .img {
+    width: 100%;
+    height: 100%;
+    background-size: cover !important;
+  }
+
+  .list-right {
+    margin: 20px 15px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  .list-top {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .list-title {
+    font-size: 20px;
+    font-weight: bold;
+    color: var(--text-color);
+  }
+
+  .list-content {
+    font-size: 14px;
+    color: var(--text-sub-color);
+    line-height: 1.5;
+  }
+
+  .list-belw {
+    display: flex;
+    justify-content: space-between;
+    border-top: rgba(230, 230, 230, 0.63) solid 1px;
+    padding-top: 10px;
+    align-items: center;
+    user-select: none;
+  }
+
+  .post-stats {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .qsub-icon {
+    width: 14px;
+    height: 14px;
+  }
+
+  .list-belw-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-sub-color);
+  }
+
+  .svg-icon {
+    width: 14px;
+    height: 14px;
+    fill: var(--text-sub-color);
+  }
+}
+
+.post-list.empty {
+  text-align: center;
+  padding: 40px 0;
+  color: var(--text-sub-color);
+}
+
+.qsub-data-loading {
+  text-align: center;
+  padding: 12px 0;
+  margin-bottom: 20px;
+  border-radius: 5px;
+  background-color: var(--bg-brand-color);
+  color: var(--text-color);
+  cursor: pointer;
+}
+
+.qsub-data-loading.disabled {
+  cursor: default;
+  opacity: 0.7;
+}
+
+.qsub-data-loading.loading {
+  cursor: wait;
 }
 </style>
