@@ -39,6 +39,7 @@ import { detail } from '@/http/interface/client/catalog';
 import { openLabelTImeLine } from '@/utils/openPage';
 import { setWebTitle } from '@/utils/dataDispose';
 import useElementPlusInjections from '@/views/client/useElementPlusInjections';
+import { readSSRState, writeSSRState, snapshotState } from '@/ssr/state';
 
 useElementPlusInjections();
 const route = useRoute();
@@ -60,13 +61,37 @@ const label = ref<any[]>([]);
 /**
  * 分类专栏初始化
  */
-try {
-  const response: any = await detail(paramData.value);
-  title.value = response.catalogName;
-  setWebTitle(title.value);
-  label.value = response.labelList;
-} catch (error) {
-  console.error('获取专栏详情失败:', error);
+const STATE_KEY = `client-catalog-${catalogId}`;
+
+type CatalogHydrationState = {
+  title?: string;
+  labelList?: any[];
+};
+
+const hydrated = readSSRState<CatalogHydrationState>(STATE_KEY);
+
+if (hydrated) {
+  title.value = hydrated.title || '';
+  if (title.value) {
+    setWebTitle(title.value);
+  }
+  label.value = Array.isArray(hydrated.labelList) ? [...hydrated.labelList] : [];
+} else {
+  try {
+    const response: any = await detail(paramData.value);
+    title.value = response.catalogName;
+    if (title.value) {
+      setWebTitle(title.value);
+    }
+    label.value = response.labelList;
+  } catch (error) {
+    console.error('获取专栏详情失败:', error);
+  } finally {
+    writeSSRState(STATE_KEY, {
+      title: title.value,
+      labelList: snapshotState(label.value),
+    });
+  }
 }
 </script>
 

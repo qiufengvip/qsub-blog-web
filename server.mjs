@@ -6,6 +6,16 @@ import { createProxyMiddleware } from 'http-proxy-middleware';
 const isProd = process.env.NODE_ENV === 'production';
 const resolve = (p) => path.resolve(process.cwd(), p);
 
+function serializeState(state) {
+  const json = JSON.stringify(state || {});
+  return json
+    .replace(/</g, '\\u003c')
+    .replace(/>/g, '\\u003e')
+    .replace(/\u2028/g, '\\u2028')
+    .replace(/\u2029/g, '\\u2029')
+    .replace(/&/g, '\\u0026');
+}
+
 async function createServer() {
   const app = express();
 
@@ -52,10 +62,11 @@ async function createServer() {
         let template = fs.readFileSync(resolve('index.html'), 'utf-8');
         template = await vite.transformIndexHtml(url, template);
         const { render } = await vite.ssrLoadModule('/src/entry-server.ts');
-        const { html: appHtml, preloadLinks } = await render(url);
+        const { html: appHtml, preloadLinks, state } = await render(url);
         const html = template
           .replace('<!--preload-links-->', preloadLinks)
-          .replace('<!--ssr-outlet-->', appHtml);
+          .replace('<!--ssr-outlet-->', appHtml)
+          .replace('<!--initial-state-->', `<script>window.__INITIAL_STATE__=${serializeState(state)}</script>`);
         res.status(200).set({ 'Content-Type': 'text/html' }).end(html);
       } catch (error) {
         vite.ssrFixStacktrace(error);
@@ -79,10 +90,11 @@ async function createServer() {
     app.use('*', async (req, res) => {
       try {
         const url = req.originalUrl;
-        const { html: appHtml, preloadLinks } = await render(url, manifest);
+        const { html: appHtml, preloadLinks, state } = await render(url, manifest);
         const html = template
           .replace('<!--preload-links-->', preloadLinks)
-          .replace('<!--ssr-outlet-->', appHtml);
+          .replace('<!--ssr-outlet-->', appHtml)
+          .replace('<!--initial-state-->', `<script>window.__INITIAL_STATE__=${serializeState(state)}</script>`);
         res.status(200).set({ 'Content-Type': 'text/html' }).end(html);
       } catch (error) {
         res.status(500).end(error.stack);

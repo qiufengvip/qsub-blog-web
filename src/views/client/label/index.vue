@@ -31,6 +31,7 @@ import { getLabelList } from '@/http/interface/client/label';
 import { openLabelTImeLine } from '@/utils/openPage';
 import { setWebTitle } from '@/utils/dataDispose';
 import useElementPlusInjections from '@/views/client/useElementPlusInjections';
+import { readSSRState, writeSSRState, snapshotState } from '@/ssr/state';
 
 useElementPlusInjections();
 const img = ref('url(http://file.qsub.cn/blog/2024/8/e7a984a09f0b4cb68af458357bbdfbe0.jpg) center center / 100% no-repeat');
@@ -69,8 +70,28 @@ const fetchLabels = async () => {
     loading.value = false;
   }
 };
+const STATE_KEY = 'client-label';
 
-await fetchLabels();
+type LabelHydrationState = {
+  postNumber: number;
+  labelNumber: number;
+  labelList: any[];
+};
+
+const hydrated = readSSRState<LabelHydrationState>(STATE_KEY);
+
+if (hydrated) {
+  postNumber.value = hydrated.postNumber ?? 0;
+  labelNumber.value = hydrated.labelNumber ?? 0;
+  label.value = Array.isArray(hydrated.labelList) ? [...hydrated.labelList] : [];
+} else {
+  await fetchLabels();
+  writeSSRState(STATE_KEY, {
+    postNumber: postNumber.value,
+    labelNumber: labelNumber.value,
+    labelList: snapshotState(label.value),
+  });
+}
 </script>
 
 <style lang="scss" scoped>

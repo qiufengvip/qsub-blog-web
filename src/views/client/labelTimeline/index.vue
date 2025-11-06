@@ -46,6 +46,7 @@ import { openPost } from '@/utils/openPage';
 import { detail } from '@/http/interface/client/label';
 import { setWebTitle } from '@/utils/dataDispose';
 import useElementPlusInjections from '@/views/client/useElementPlusInjections';
+import { readSSRState, writeSSRState, snapshotState } from '@/ssr/state';
 
 useElementPlusInjections();
 const img = ref('url(http://file.qsub.cn/blog/2024/8/d563c1f1e3e84dc5a4cd73ba838af26e.jpg) center center / 100% no-repeat');
@@ -83,6 +84,7 @@ const getDataList = async () => {
     showLoading.value = false;
   } finally {
     loading.value = false;
+    persistState();
   }
 };
 const labelData = ref<any>({});
@@ -99,16 +101,48 @@ const fetchLabelDetail = async () => {
     console.error('获取标签详情失败:', error);
     labelData.value = undefined;
     showLoading.value = false;
+    persistState();
   }
 };
 
-if (labelId) {
+const STATE_KEY = `client-label-timeline-${labelId}`;
+
+type LabelTimelineHydrationState = {
+  labelData: any;
+  postList: any[];
+  pageNum: number;
+  showLoading: boolean;
+};
+
+const persistState = () => {
+  writeSSRState(STATE_KEY, {
+    labelData: snapshotState(labelData.value),
+    postList: snapshotState(postList.value),
+    pageNum: PageInfo.pageNum,
+    showLoading: showLoading.value,
+  });
+};
+
+const hydrated = readSSRState<LabelTimelineHydrationState>(STATE_KEY);
+
+if (hydrated) {
+  labelData.value = hydrated.labelData ?? undefined;
+  if (labelData.value?.name) {
+    setWebTitle(labelData.value.name);
+  }
+  postList.value = Array.isArray(hydrated.postList) ? [...hydrated.postList] : [];
+  PageInfo.pageNum = hydrated.pageNum ?? 0;
+  showLoading.value = typeof hydrated.showLoading === 'boolean' ? hydrated.showLoading : false;
+} else if (labelId) {
   await fetchLabelDetail();
   if (labelData.value?.name) {
     await getDataList();
+  } else {
+    persistState();
   }
 } else {
   showLoading.value = false;
+  persistState();
 }
 </script>
 

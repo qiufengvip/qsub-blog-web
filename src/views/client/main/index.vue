@@ -104,6 +104,7 @@ import { Clock } from '@element-plus/icons';
 import { BlogPostSketch } from '@/utils/interface/blogPostSketch';
 import { openPost } from '@/utils/openPage';
 import useElementPlusInjections from '@/views/client/useElementPlusInjections';
+import { readSSRState, writeSSRState, snapshotState } from '@/ssr/state';
 
 useElementPlusInjections();
 const nav = ref('getNewestPostList');
@@ -215,6 +216,7 @@ const fetchPostList = async (id: string) => {
     loading.value = '加载失败，点击重试';
   } finally {
     loadingData.value = false;
+    persistState();
   }
 };
 
@@ -246,7 +248,48 @@ const isClient = typeof window !== 'undefined';
 const w = ref(isClient ? window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth : 0); //导航头
 const h = ref<any>(isClient ? window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight : 0);
 const main = ref();
-await showPostList(nav.value);
+
+type MainViewHydrationState = {
+  nav: string;
+  postList: BlogPostSketch[];
+  pageInfo: typeof pageInfo.value;
+  hasMore: boolean;
+  loading: string;
+};
+
+const STATE_KEY = 'client-main';
+
+const applyHydratedState = (state: MainViewHydrationState) => {
+  nav.value = state.nav || nav.value;
+  activeNav = nav.value;
+  pageInfo.value = {
+    search: state.pageInfo?.search || resolveSearch(nav.value),
+    pageNum: state.pageInfo?.pageNum ?? 0,
+    pageSize: state.pageInfo?.pageSize ?? 10,
+  };
+  postList.value = Array.isArray(state.postList) ? [...state.postList] : [];
+  hasMore.value = typeof state.hasMore === 'boolean' ? state.hasMore : true;
+  loading.value = state.loading || loading.value;
+};
+
+const persistState = () => {
+  writeSSRState(STATE_KEY, {
+    nav: nav.value,
+    postList: snapshotState(postList.value),
+    pageInfo: snapshotState(pageInfo.value),
+    hasMore: hasMore.value,
+    loading: loading.value,
+  });
+};
+
+const hydratedState = readSSRState<MainViewHydrationState>(STATE_KEY);
+
+if (hydratedState) {
+  applyHydratedState(hydratedState);
+} else {
+  await showPostList(nav.value);
+  persistState();
+}
 
 onMounted(() => {
   if (!isClient) {

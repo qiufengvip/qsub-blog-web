@@ -1,7 +1,14 @@
 import { createApp } from './app';
 import { checkLogin, initConfigData } from '@/utils/dataDispose';
 
-const { app, router } = createApp(false);
+declare global {
+  interface Window {
+    __INITIAL_STATE__?: Record<string, unknown>;
+  }
+}
+
+const initialState = typeof window !== 'undefined' ? window.__INITIAL_STATE__ || {} : {};
+const { app, router } = createApp(false, initialState);
 
 async function bootstrap() {
   if (typeof window !== 'undefined') {
@@ -15,6 +22,10 @@ async function bootstrap() {
 
   await router.isReady();
   app.mount('#app', true);
+
+  if (typeof window !== 'undefined') {
+    delete window.__INITIAL_STATE__;
+  }
 }
 
 bootstrap();

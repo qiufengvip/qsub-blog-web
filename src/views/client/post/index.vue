@@ -175,6 +175,7 @@ import { BlogClientPostDetail } from '@/utils/interface/BlogClientPostDetail';
 import { addPostLike, getPostLikeStart, setWebTitle } from '@/utils/dataDispose';
 import { openLabelTImeLine } from '@/utils/openPage';
 import useElementPlusInjections from '@/views/client/useElementPlusInjections';
+import { readSSRState, writeSSRState, snapshotState } from '@/ssr/state';
 
 useElementPlusInjections();
 const route = useRoute();
@@ -187,6 +188,16 @@ const showPost = ref(true);
 
 const loading = ref(true);
 const postData = ref<BlogClientPostDetail | undefined>(undefined);
+const STATE_KEY = `client-post-${postId}`;
+
+const persistState = () => {
+  writeSSRState(STATE_KEY, {
+    postData: snapshotState(postData.value),
+    showPost: showPost.value,
+    loading: loading.value,
+  });
+};
+
 const fetchPostDetail = async () => {
   try {
     const res: any = await detail({ postId: postId });
@@ -198,10 +209,27 @@ const fetchPostDetail = async () => {
     showPost.value = false;
   } finally {
     loading.value = false;
+    persistState();
   }
 };
+type PostHydrationState = {
+  postData?: BlogClientPostDetail;
+  showPost?: boolean;
+  loading?: boolean;
+};
 
-await fetchPostDetail();
+const hydrated = readSSRState<PostHydrationState>(STATE_KEY);
+
+if (hydrated) {
+  postData.value = hydrated.postData ? (snapshotState(hydrated.postData) as BlogClientPostDetail) : undefined;
+  showPost.value = typeof hydrated.showPost === 'boolean' ? hydrated.showPost : true;
+  loading.value = typeof hydrated.loading === 'boolean' ? hydrated.loading : false;
+  if (postData.value?.title) {
+    setWebTitle(postData.value.title);
+  }
+} else {
+  await fetchPostDetail();
+}
 /**
  * 点击喜欢
  */

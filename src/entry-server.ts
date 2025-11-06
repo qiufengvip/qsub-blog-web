@@ -30,12 +30,14 @@ function renderPreloadLinks(modules: Set<string>, manifest: Manifest) {
 }
 
 export async function render(url: string, manifest?: Manifest) {
-  const { app, router } = createApp(true);
+  const { app, router, state } = createApp(true);
 
   router.push(url);
   await router.isReady();
 
-  const ctx: { modules?: Set<string> } = {};
+  const ctx: { modules?: Set<string>; state: Record<string, unknown> } = {
+    state,
+  };
   const appHtml = await renderToString(app as App, ctx);
 
   const preloadLinks = manifest && ctx.modules ? renderPreloadLinks(ctx.modules, manifest) : '';
@@ -43,5 +45,6 @@ export async function render(url: string, manifest?: Manifest) {
   return {
     html: appHtml,
     preloadLinks,
+    state: ctx.state,
   };
 }

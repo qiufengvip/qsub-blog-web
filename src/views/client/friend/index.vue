@@ -53,6 +53,7 @@ import { openLink } from '@/utils/openPage';
 import { ElMessage } from 'element-plus';
 import MarkdownShow from '@/components/common/MarkdownShow/index.vue';
 import useElementPlusInjections from '@/views/client/useElementPlusInjections';
+import { readSSRState, writeSSRState, snapshotState } from '@/ssr/state';
 
 useElementPlusInjections();
 setWebTitle('朋友');
@@ -78,7 +79,22 @@ const fetchFriendList = async () => {
     console.error('获取友链列表失败:', error);
   }
 };
-await fetchFriendList();
+const STATE_KEY = 'client-friend';
+
+type FriendHydrationState = {
+  friendList: any[];
+};
+
+const hydrated = readSSRState<FriendHydrationState>(STATE_KEY);
+
+if (hydrated) {
+  friendList.value = Array.isArray(hydrated.friendList) ? [...hydrated.friendList] : [];
+} else {
+  await fetchFriendList();
+  writeSSRState(STATE_KEY, {
+    friendList: snapshotState(friendList.value),
+  });
+}
 const handleCopyCodeSuccess = () => {
   ElMessage.success('复制成功');
 };
