@@ -7,6 +7,15 @@ import { ApplicationError } from '@/utils/error';
 // 获取浏览器的接口地址。
 
 const isClient = typeof window !== 'undefined';
+
+const notifyError = (message: any) => {
+  if (isClient) {
+    ElMessage.error(message);
+  } else {
+    const text = typeof message === 'string' ? message : message?.message ?? message;
+    console.error('[http] request failed:', text);
+  }
+};
 const baseUrl = isClient ? window.location.origin : 'http://localhost:3000';
 
 const http = axios.create({
@@ -25,7 +34,7 @@ http.interceptors.request.use(
   },
   (error) => {
     // 可以安装elementui等ui组件，将错误信息输出到界面。
-    ElMessage.error(error);
+    notifyError(error);
     // @ts-ignore
     return Promise.error(error);
   }
@@ -39,21 +48,25 @@ http.interceptors.response.use(
     }
     if (response.status === 200 && response.data.code !== undefined && response.data.code !== 0) {
       if (response.data.code == 993) {
-        ElMessage({
-          message: '登录超时,请重新登录',
-          type: 'error',
-          grouping: true,
-        });
+        if (isClient) {
+          ElMessage({
+            message: '登录超时,请重新登录',
+            type: 'error',
+            grouping: true,
+          });
+        } else {
+          console.error('[http] 登录超时,请重新登录');
+        }
         if (isClient) {
           sessionStorage.setItem('token', '');
         }
         return Promise.reject(response);
       } else if (response.data.code == 500 || response.data.code == 400) {
         //返回错误拦截
-        ElMessage.error(response.data.msg);
+        notifyError(response.data.msg);
         return Promise.reject(response);
       } else {
-        ElMessage.error(response.data.msg);
+        notifyError(response.data.msg);
         // 自定义错误
         throw new ApplicationError(response.data.code); //返回错误代码
       }
@@ -64,21 +77,25 @@ http.interceptors.response.use(
   },
   (error) => {
     if (error.response && error.response.status === 993) {
-      ElMessage({
-        message: '登录超时,请重新登录',
-        type: 'error',
-        grouping: true,
-      });
+      if (isClient) {
+        ElMessage({
+          message: '登录超时,请重新登录',
+          type: 'error',
+          grouping: true,
+        });
+      } else {
+        console.error('[http] 登录超时,请重新登录');
+      }
       if (isClient) {
         sessionStorage.setItem('token', '');
       }
     } else {
       if (error.message.indexOf('timeout') > -1) {
-        ElMessage.error('请求超时');
+        notifyError('请求超时');
       } else if (error.message.indexOf('Network') > -1) {
-        ElMessage.error('网络连接错误');
+        notifyError('网络连接错误');
       } else {
-        ElMessage.error(error.message);
+        notifyError(error.message);
       }
       return Promise.reject(error);
     }
