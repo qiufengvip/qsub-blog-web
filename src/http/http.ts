@@ -8,6 +8,27 @@ import { ApplicationError } from '@/utils/error';
 
 const isClient = typeof window !== 'undefined';
 
+const sanitizeOrigin = (origin?: string | null) => {
+  if (!origin) {
+    return '';
+  }
+  return origin.endsWith('/') ? origin.slice(0, -1) : origin;
+};
+
+const resolveServerOrigin = () => {
+  const env =
+    typeof globalThis !== 'undefined' &&
+    (globalThis as any).process &&
+    (globalThis as any).process.env
+      ? ((globalThis as any).process.env as Record<string, string | undefined>)
+      : undefined;
+  if (!env) {
+    return '';
+  }
+  const { SSR_API_BASE_URL, API_PROXY_TARGET, API_BASE_URL, VITE_API_BASE_URL } = env;
+  return sanitizeOrigin(SSR_API_BASE_URL || API_PROXY_TARGET || API_BASE_URL || VITE_API_BASE_URL);
+};
+
 const notifyError = (message: any) => {
   if (isClient) {
     ElMessage.error(message);
@@ -16,7 +37,8 @@ const notifyError = (message: any) => {
     console.error('[http] request failed:', text);
   }
 };
-const baseUrl = isClient ? window.location.origin : 'http://localhost:3000';
+const serverOrigin = resolveServerOrigin();
+const baseUrl = isClient ? window.location.origin : serverOrigin || 'http://localhost:3000';
 
 const http = axios.create({
   baseURL: baseUrl + '/api',

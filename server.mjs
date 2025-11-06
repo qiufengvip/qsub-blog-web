@@ -1,12 +1,41 @@
 import fs from 'fs';
 import path from 'path';
 import express from 'express';
+import { createProxyMiddleware } from 'http-proxy-middleware';
 
 const isProd = process.env.NODE_ENV === 'production';
 const resolve = (p) => path.resolve(process.cwd(), p);
 
 async function createServer() {
   const app = express();
+
+  const {
+    SSR_API_BASE_URL,
+    API_PROXY_TARGET,
+    SSR_API_STRIP_PREFIX,
+    API_BASE_URL,
+    VITE_API_BASE_URL,
+  } = process.env;
+  const rawApiTarget =
+    SSR_API_BASE_URL || API_PROXY_TARGET || API_BASE_URL || VITE_API_BASE_URL || 'http://127.0.0.1:8080/';
+  const apiTarget = rawApiTarget.endsWith('/') ? rawApiTarget : `${rawApiTarget}/`;
+  const stripPrefix = SSR_API_STRIP_PREFIX !== 'false';
+
+  app.use(
+    '/api',
+    createProxyMiddleware({
+      target: apiTarget,
+      changeOrigin: true,
+      logLevel: 'warn',
+      pathRewrite: stripPrefix ? { '^/api': '' } : undefined,
+      onError(err, req, res) {
+        console.error('[proxy] request error:', err.message);
+        if (!res.headersSent) {
+          res.status(502).end('API proxy failed');
+        }
+      },
+    })
+  );
 
   if (!isProd) {
     const { createServer: createViteServer } = await import('vite');
